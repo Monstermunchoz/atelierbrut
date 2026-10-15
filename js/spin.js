@@ -14,6 +14,10 @@ export function initSpin(el) {
   const bar = document.createElement("div"); bar.className = "spin-bar"; el.appendChild(bar);
   const hint = document.createElement("div"); hint.className = "spin-hint"; hint.textContent = el.dataset.hint || "Glissez pour tourner"; el.appendChild(hint);
   const meta = el.parentElement && el.parentElement.querySelector(".spinmeta-bar");
+  const cur = document.createElement("div"); cur.className = "cursor"; cur.textContent = "Tourner"; el.appendChild(cur);
+  let cx = 0, cy = 0, tx = 0, ty = 0, curRaf = null;
+  const follow = () => { cx += (tx - cx) * .22; cy += (ty - cy) * .22; cur.style.transform = `translate(${cx - 42}px, ${cy - 42}px)`; if (Math.abs(tx - cx) > .3 || Math.abs(ty - cy) > .3) curRaf = requestAnimationFrame(follow); else curRaf = null; };
+  el.addEventListener("pointermove", e => { const r = el.getBoundingClientRect(); tx = e.clientX - r.left; ty = e.clientY - r.top; if (!curRaf) curRaf = requestAnimationFrame(follow); });
   const urls = Array.from({ length: n }, (_, i) => src.replace("{i}", pad(i)));
   const loaded = new Array(n).fill(false);
   let loadedCount = 0;
@@ -21,6 +25,7 @@ export function initSpin(el) {
   function show(i) {
     frame = ((Math.round(i) % n) + n) % n;
     if (loaded[frame]) img.src = urls[frame];
+    else { for (let k = 1; k < n; k++) { const j = (frame + k) % n; if (loaded[j]) { img.src = urls[j]; break; } } }
     bar.style.setProperty("--p", (frame / n));
     if (meta) meta.style.setProperty("--p", (frame / n));
   }
@@ -33,7 +38,8 @@ export function initSpin(el) {
     while (inflight < 3 && idx < seq.length) {
       const i = seq[idx++]; inflight++;
       const im = new Image(); im.decoding = "async";
-      im.onload = im.onerror = () => { inflight--; loaded[i] = true; loadedCount++; if (i === frame) img.src = urls[i]; el.classList.toggle("ready", loadedCount >= Math.min(n, 8)); pump(); };
+      im.onload = () => { inflight--; loaded[i] = true; loadedCount++; if (i === frame || !img.getAttribute("src")) { img.src = urls[i]; if (!loaded[frame]) frame = i; } el.classList.toggle("ready", loadedCount >= Math.min(n, 8)); pump(); };
+      im.onerror = () => { inflight--; pump(); };
       im.src = urls[i];
     }
   }

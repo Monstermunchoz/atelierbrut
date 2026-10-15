@@ -1,6 +1,7 @@
-"""ATELIER BRUT — rendu photoréaliste (Cycles) de la table « W » et de ses déclinaisons.
-Usage : python3 table_w.py <variant> <out_dir> [--spin N] [--samples S] [--res W H] [--scene studio|salon]
+"""ATELIER BRUT — rendus photoréalistes (Blender / Cycles) des tables de tenségrité et des potagers suspendus.
+Usage : python3 tensegrite.py <variante> <dossier> [--spin N] [--samples S] [--res W H] [--scene studio|salon] [--angle deg]
 """
+
 import bpy, bmesh, math, sys, os, random
 from mathutils import Vector, Matrix
 
@@ -17,25 +18,31 @@ SCENE = opt("--scene", "studio")
 START = int(opt("--start", 0))
 os.makedirs(out_dir, exist_ok=True)
 
+
 # ---------------------------------------------------------------- variantes
+# Table de tenségrité (« table en lévitation ») :
+#   - plateau bas et plateau haut de même format ;
+#   - un triangle (Λ) fixé sur le plateau bas, pointe vers le haut ;
+#   - un triangle (V) fixé sous le plateau haut, pointe vers le bas ;
+#   - les deux triangles sont dans deux plans parallèles, ils se croisent sans se toucher ;
+#   - une corde centrale relie la pointe haute du Λ à la pointe basse du V : elle porte le plateau ;
+#   - quatre liens verticaux aux coins (cordes ou chaînettes) empêchent le plateau de basculer.
 V = {
-    "origine":    dict(top="pin", legs="pin", rope="chanvre", pattern="centre", L=.62, W=.62),
-    "echec":      dict(top="chene", legs="chene", rope="noir", pattern="centre", chess=True, L=.66, W=.66),
-    "brulee":     dict(top="frene", legs="frene", rope="laiton", pattern="centre", L=.62, W=.62),
-    "manifeste":  dict(top="noyer", legs="noyer", rope="bordeaux", pattern="centre", text="ce qui tient, tient par le vide", L=.7, W=.62),
-    "harpe":      dict(top="chene", legs="chene", rope="mousse", pattern="harpe", L=.62, W=.62),
-    "nocturne":   dict(top="frene", legs="frene", rope="laiton", pattern="centre", inlay=True, lamp=True, L=.62, W=.62),
-    "console":    dict(top="olivier", legs="olivier", rope="chanvre", pattern="centre", L=1.2, W=.42, two=True),
-    "manger":     dict(top="noyer", legs="noyer", rope="noir", pattern="coins", L=1.9, W=.88, two=True, H=.75),
+    "origine":   dict(L=.50, W=.50, H=.62, wood="pin",     link="chaine",   label="pin, chaînettes laiton"),
+    "echec":     dict(L=.60, W=.60, H=.68, wood="chene",   link="noir",     chess=True),
+    "brulee":    dict(L=.52, W=.52, H=.62, wood="frene",   link="laiton"),
+    "manifeste": dict(L=.62, W=.46, H=.64, wood="noyer",   link="bordeaux", text="ce qui tient, tient par le vide"),
+    "lune":      dict(L=.56, W=.56, H=.52, wood="olivier", link="chanvre",  round=True),
+    "basse":     dict(L=1.00, W=.56, H=.40, wood="noyer",  link="noir"),
+    "console":   dict(L=.96, W=.32, H=.80, wood="chene",   link="chanvre"),
+    "nocturne":  dict(L=.52, W=.52, H=.62, wood="frene",   link="laiton",   inlay=True, lamp=True),
+    "chainette": dict(L=1.9, W=.88, H=.75, wood="noyer",   link="noir",     potager="chainette"),
+    "cascade":   dict(L=.5,  W=.5,  H=.6,  wood="pin",     link="chanvre",  potager="cascade"),
 }
-V.update({
-    "chainette": dict(top="noyer", legs="noyer", rope="noir", pattern="coins", L=1.9, W=.88, two=True, H=.75, potager="chainette"),
-    "integre":   dict(top="noyer", legs="noyer", rope="mousse", pattern="coins", L=2.0, W=.92, two=True, H=.75, potager="integre"),
-    "cascade":   dict(top="pin", legs="pin", rope="chanvre", pattern="coins", L=.62, W=.62, potager="cascade", notable=True),
-})
 cfg = V[variant]
-L, W = cfg["L"], cfg["W"]; H = cfg.get("H", .74); T = .03
-PW, PT = .085, .027
+cfg["top"] = cfg["wood"]; cfg["legs"] = cfg["wood"]; cfg["rope"] = cfg["link"] if cfg["link"] != "chaine" else "laiton"
+L, W, H = cfg["L"], cfg["W"], cfg["H"]
+T = .026 if max(L, W) < .8 else .032
 
 # ---------------------------------------------------------------- scène
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -48,7 +55,7 @@ sc.cycles.max_bounces = 6; sc.cycles.caustics_reflective = False; sc.cycles.caus
 sc.render.resolution_x, sc.render.resolution_y = RES; sc.render.resolution_percentage = 100
 sc.render.image_settings.file_format = "JPEG"; sc.render.image_settings.quality = 90
 sc.view_settings.view_transform = "AgX"; sc.view_settings.look = "AgX - Medium High Contrast"
-sc.view_settings.exposure = -0.15
+sc.view_settings.exposure = -0.3
 sc.render.film_transparent = False
 
 def mat(name):
@@ -61,7 +68,7 @@ def mat(name):
 WOODS = {
     "pin":     dict(a=(.44,.28,.13), b=(.32,.19,.08), c=(.55,.38,.2), scale=22, rough=.48, coat=.1),
     "chene":   dict(a=(.42,.3,.17), b=(.33,.22,.11), c=(.5,.38,.24), scale=14, rough=.5, coat=.08),
-    "noyer":   dict(a=(.2,.11,.06), b=(.13,.07,.035), c=(.28,.17,.1), scale=16, rough=.42, coat=.15),
+    "noyer":   dict(a=(.13,.075,.04), b=(.08,.045,.022), c=(.19,.115,.065), scale=16, rough=.42, coat=.18),
     "olivier": dict(a=(.44,.33,.17), b=(.26,.17,.08), c=(.6,.48,.28), scale=26, rough=.4, coat=.12),
     "frene":   dict(a=(.02,.016,.013), b=(.005,.004,.003), c=(.045,.036,.03), scale=30, rough=.28, coat=.4),
 }
@@ -189,128 +196,7 @@ def torus(name, loc, R, r, m, rot=(0,0,0)):
 
 # Blender : Z vers le haut. Plan du W = plan XZ (y = 0).
 brass = metal_mat("laiton")
-top_m = wood_mat(cfg["top"], 0, "X")
-leg_m = wood_mat(cfg["legs"], 1, "X")
-rope_m = rope_mat(cfg["rope"])
-rope_r = .0012 if cfg["rope"] == "laiton" else .0025
-
 table = []
-topZ = H - T
-def frame(span, cx, axis="X", lev=False):
-    """Cadre W dans un plan vertical. axis X : plan XZ à y=0, centré en x=cx. axis Y : plan YZ à x=cx."""
-    objs = []
-    def P(u, z): return (cx + u, 0, z) if axis == "X" else (cx, u, z)
-    normal = Vector((0, 1, 0)) if axis == "X" else Vector((1, 0, 0))
-    run_len = span * 1.15
-    baseZ = PT * 1.8
-    # patin principal
-    r = box("runner", (run_len, PW * .9, PT * .9), loc=P(0, PT * .45), m=leg_m)
-    if axis == "Y": r.rotation_euler = (0, 0, math.pi / 2)
-    objs.append(r)
-    anchors = [P(run_len / 2 - .025, baseZ), P(-(run_len / 2 - .025), baseZ)]
-    xo = span * .5 - PW * .35
-    # Tenségrité : le triangle bas (Λ) est debout sur le patin, dans le plan du patin, pointe sous le plateau ;
-    # le triangle haut (V) est fixé sous le plateau dans le plan PERPENDICULAIRE, pointe au-dessus du patin.
-    # Les deux triangles se croisent à 90° (le V passe dans l'ouverture du Λ) ; une corde verticale relie les pointes.
-    gapT, gapB = .022, .03
-    def Q(u, z): return (cx, u, z) if axis == "X" else (cx + u, 0, z)   # plan perpendiculaire
-    normalQ = Vector((1, 0, 0)) if axis == "X" else Vector((0, 1, 0))
-    apexB = Vector(P(0, topZ - gapT)); apexT = Vector(Q(0, baseZ + gapB))
-    for i, foot in enumerate((P(-xo, baseZ), P(xo, baseZ))):
-        o = plank_between("lb%d" % i, Vector(foot), apexB, PW, PT, leg_m, normal); o.location += normal * ((1 if i else -1) * PT * .5); objs.append(o)
-    vspan = span * .24
-    for i, hang in enumerate((Q(-vspan, topZ), Q(vspan, topZ))):
-        o = plank_between("lt%d" % i, Vector(hang), apexT, PW, PT, leg_m, normalQ); o.location += normalQ * ((1 if i else -1) * PT * .5); objs.append(o)
-    rc_a = Vector(P(0, topZ - gapT - PW * .5)); rc_b = Vector(Q(0, baseZ + gapB + PW * .5))
-    if cfg["pattern"] != "coins":
-        objs.append(cyl_between("rope_c", rc_a, rc_b, rope_r * 1.25, rope_m))
-        objs.append(torus("eyeB", rc_a, .006, .0016, brass, (math.pi / 2, 0, 0)))
-        objs.append(torus("eyeT", rc_b, .006, .0016, brass, (math.pi / 2, 0, 0)))
-    if cfg["pattern"] == "harpe":
-        n = 9
-        for i in range(n):
-            t = (i + 1) / (n + 1)
-            for sg in (-1, 1):
-                u = sg * xo * (1 - t)
-                zL = baseZ + (topZ - gapT - baseZ) * t
-                A = Vector(P(u, baseZ + PW * .5)); B = Vector(P(u, zL - PW * .35))
-                if B.z - A.z > .05: objs.append(cyl_between("harpL", A, B, rope_r * .7, rope_m, 8))
-                u2 = sg * vspan * (1 - t)
-                zV = topZ - (topZ - baseZ - gapB) * t
-                A2 = Vector(Q(u2, topZ - .004)); B2 = Vector(Q(u2, zV + PW * .35))
-                if A2.z - B2.z > .05: objs.append(cyl_between("harpV", A2, B2, rope_r * .7, rope_m, 8))
-    for a in anchors:
-        objs.append(torus("knot", (a[0], a[1], a[2] + .003), rope_r * 1.6, rope_r * .9, rope_m, (math.pi / 2, 0, 0)))
-    return objs, anchors, run_len
-
-anchors = []
-if not cfg.get("two"):
-    objs, anc, run_len = frame(L, 0, "X", cfg["pattern"] == "lev"); table += objs; anchors += anc
-    ang = math.radians(90)
-    r2 = box("runner2", (run_len, PW * .9, PT * .9), loc=(0, 0, PT * 1.35), rot=(0, 0, ang), m=leg_m); table.append(r2)
-    hr = run_len / 2 - .025
-    for sg in (1, -1):
-        anchors.append((sg * hr * math.cos(ang), sg * hr * math.sin(ang), PT * 1.8))
-    # patins laiton
-    for a in anchors:
-        bpy.ops.mesh.primitive_cylinder_add(radius=.015, depth=.006, vertices=24, location=(a[0], a[1], .003))
-        o = bpy.context.active_object; o.data.materials.append(brass); table.append(o)
-else:
-    for sg in (-1, 1):
-        objs, anc, run_len = frame(W, sg * (L / 2 - .2), "Y", False); table += objs; anchors += anc
-    s = box("stretcher", (L - .4 - PT, PW * .6, PT * .9), loc=(0, 0, PT * .45), m=leg_m); table.append(s)
-
-# plateau
-top = box("top", (L, W, T), loc=(0, 0, topZ + T / 2), m=top_m, bevel=.0035)
-table.append(top)
-if cfg.get("chess"):
-    s = min(L, W) * .78
-    hole = box("hole", (s, s, T * .5), loc=(0, 0, topZ + T), bevel=0)
-    bo = top.modifiers.new("cut", "BOOLEAN"); bo.object = hole; bo.operation = "DIFFERENCE"
-    hole.hide_render = True; hole.hide_viewport = True
-    board = box("board", (s - .004, s - .004, .012), loc=(0, 0, topZ + T - .006 + .0005), m=chess_mat(), bevel=.001)
-    # UV : projection du dessus
-    bpy.context.view_layer.objects.active = board; bpy.ops.object.mode_set(mode="EDIT"); bpy.ops.mesh.select_all(action="SELECT")
-    bpy.ops.uv.cube_project(cube_size=s - .004, correct_aspect=True); bpy.ops.object.mode_set(mode="OBJECT")
-    rim = box("rim", (s + .006, s + .006, .003), loc=(0, 0, topZ + T - .0015), m=brass, bevel=0)
-    rim_hole = box("rimhole", (s - .002, s - .002, .01), loc=(0, 0, topZ + T), bevel=0)
-    bo2 = rim.modifiers.new("cut", "BOOLEAN"); bo2.object = rim_hole; rim_hole.hide_render = True; rim_hole.hide_viewport = True
-    table += [board, rim]
-if cfg.get("inlay"):
-    inl = box("inlay", (L + .002, W + .002, .004), loc=(0, 0, topZ + T * .5), m=brass, bevel=0)
-    ih = box("inlayhole", (L - .012, W - .012, .02), loc=(0, 0, topZ + T * .5), bevel=0)
-    b = inl.modifiers.new("cut", "BOOLEAN"); b.object = ih; ih.hide_render = True; ih.hide_viewport = True; table.append(inl)
-if cfg.get("lamp"):
-    bpy.ops.object.light_add(type="AREA", location=(0, 0, topZ - .01)); la = bpy.context.active_object
-    la.data.energy = 18; la.data.color = (1, .78, .55); la.data.size = L * .5; la.rotation_euler = (math.pi, 0, 0); la.data.shape = "SQUARE"
-    strip = box("strip", (L * .55, W * .55, .004), loc=(0, 0, topZ - .002), bevel=0)
-    em, nt, p = mat("emit"); p.inputs["Emission Color"].default_value = (1, .8, .58, 1); p.inputs["Emission Strength"].default_value = 6
-    strip.data.materials.append(em); table.append(strip)
-if cfg.get("text"):
-    bpy.ops.object.text_add(location=(0, -W / 2 - .0002, topZ + T * .5 - .006))
-    tx = bpy.context.active_object; tx.data.body = cfg["text"]; tx.data.size = T * .55; tx.data.align_x = "CENTER"
-    tx.data.extrude = .0006
-    tx.rotation_euler = (math.pi / 2, 0, 0)
-    try:
-        f = bpy.data.fonts.load(os.path.expanduser("/usr/share/fonts/truetype/dejavu/DejaVuSerif-Italic.ttf"))
-        tx.data.font = f
-    except Exception: pass
-    tm, nt, p = mat("engrave"); p.inputs["Base Color"].default_value = (.06, .035, .02, 1); p.inputs["Roughness"].default_value = .9
-    tx.data.materials.append(tm); table.append(tx)
-
-# haubans : coins du plateau -> ancrages les plus proches
-corners = [(L/2-.02, W/2-.02), (-L/2+.02, -W/2+.02), (L/2-.02, -W/2+.02), (-L/2+.02, W/2-.02)]
-used = set()
-for cxp, cyp in corners:
-    best, bd = None, 1e9
-    for i, a in enumerate(anchors):
-        if i in used: continue
-        d = (Vector(a) - Vector((cxp, cyp, topZ))).length
-        if d < bd: bd, best = d, i
-    used.add(best); a = anchors[best]
-    table.append(cyl_between("hauban", (cxp, cyp, topZ - .004), (a[0], a[1], a[2] + .002), rope_r, rope_m))
-    table.append(torus("eye", (cxp, cyp, topZ - .005), .006, .0015, brass, (0, 0, 0)))
-
 # ---------------------------------------------------------------- décor + lumière
 def floor_mat():
     m, nt, p = mat("floor")
@@ -516,17 +402,6 @@ if cfg.get("potager") == "chainette":
     rings = trough((0, 0, z), 1.1, .24, .2, ["basilic", "menthe", "romarin", "sauge", "fraise"], 1)
     rail(1.4, ceilZ - .03)
     for rp in rings: chain(rp, (rp[0], rp[1] * .35, ceilZ - .03), brass)
-elif cfg.get("potager") == "integre":
-    lift = float(opt("--lift", .55))
-    slot = (1.0, .3)
-    hole = box("slot", (slot[0] + .02, slot[1] + .02, .2), loc=(0, 0, topZ + T / 2), bevel=0)
-    bo = top.modifiers.new("slot", "BOOLEAN"); bo.object = hole; bo.operation = "DIFFERENCE"; hole.hide_render = True; hole.hide_viewport = True
-    lip = box("lip", (slot[0] + .05, slot[1] + .05, .005), loc=(0, 0, topZ + T + .0025), m=brass, bevel=0)
-    liph = box("liph", (slot[0] + .02, slot[1] + .02, .02), loc=(0, 0, topZ + T), bevel=0); b2 = lip.modifiers.new("c", "BOOLEAN"); b2.object = liph; liph.hide_render = True; liph.hide_viewport = True
-    z = topZ + T - .2 + .01 + lift * 1.0
-    rings = trough((0, 0, z), slot[0] - .01, slot[1] - .01, .2, ["basilic", "menthe", "romarin", "sauge"], 2)
-    rail(1.3, ceilZ - .03)
-    for rp in rings: chain(rp, (rp[0], rp[1] * .4, ceilZ - .03), brass, .01, .0025)
 elif cfg.get("potager") == "cascade":
     for o in table: o.hide_render = True; o.hide_viewport = True
     tiers = [(1.2, 1.95, 0, ["romarin", "sauge", "romarin", "sauge"]), (.95, 1.5, .12, ["basilic", "menthe", "basilic"]), (.7, 1.05, .24, ["fraise", "fraise", "menthe"])]
@@ -542,15 +417,137 @@ elif cfg.get("potager") == "cascade":
             chain(rp, to, brass, .01, .0025)
         prev = rings
     cam_target = (0, .1, 1.45); cam_h = 1.5; cam_dist = 2.9
-if cfg.get("potager") in ("chainette", "integre"):
+if cfg.get("potager") == "chainette":
     cam_target = (0, 0, .95); cam_h = 1.35; cam_dist = 3.4
+
+# ---------------------------------------------------------------- table de tenségrité
+brass = metal_mat("laiton")
+wood = cfg["wood"]
+top_m = wood_mat(wood, 0, "X")
+base_m = wood_mat(wood, 2, "X")
+leg_m = wood_mat(wood, 1, "X")
+rope_m = rope_mat(cfg["rope"])
+rope_r = .0014 if cfg["link"] == "laiton" else .0026
+table = []
+
+def plate(name, z0, m):
+    """Plateau d'épaisseur T, face inférieure à z0."""
+    if cfg.get("round"):
+        bpy.ops.mesh.primitive_cylinder_add(radius=L / 2, depth=T, vertices=96, location=(0, 0, z0 + T / 2))
+        o = bpy.context.active_object; o.name = name
+        b = o.modifiers.new("bevel", "BEVEL"); b.width = .003; b.segments = 3; b.limit_method = "ANGLE"
+        o.data.materials.append(m)
+        return o
+    return box(name, (L, W, T), loc=(0, 0, z0 + T / 2), m=m, bevel=.003)
+
+if not cfg.get("potager"):
+    big = max(L, W) >= .8
+    PW = .058 if big else .046          # largeur visible des tasseaux
+    PT = .022                           # épaisseur des tasseaux
+    s = PT * .95                        # décalage des deux plans (le Λ derrière, le V devant)
+    h = H - 2 * T                       # hauteur libre entre plateaux
+    zA = T + .80 * h                    # pointe haute du Λ
+    zV = T + .20 * h                    # pointe basse du V
+    xa = .36 * L                        # pieds du Λ sur le plateau bas
+    xv = .21 * L                        # départs du V sous le plateau haut
+
+    base = plate("base", 0, base_m); table.append(base)
+    top = plate("top", H - T, top_m); table.append(top)
+
+    # coupe nette des tasseaux contre les plateaux (comme une coupe d'onglet réelle)
+    clip = box("clip", (L * 3, W * 3, h), loc=(0, 0, T + h / 2), bevel=0)
+    clip.hide_render = True; clip.hide_viewport = True
+    def leg(name, a, b):
+        a, b = Vector(a), Vector(b); d = (a - b).normalized()
+        o = plank_between(name, a + d * PW, b, PW, PT, leg_m, Vector((0, 1, 0)))
+        bo = o.modifiers.new("clip", "BOOLEAN"); bo.object = clip; bo.operation = "INTERSECT"
+        table.append(o); return o
+    # Λ (sur le plateau bas)
+    leg("lambda_g", (-xa, s, T), (0, s, zA))
+    leg("lambda_d", (xa, s, T), (0, s, zA))
+    # V (sous le plateau haut)
+    leg("v_g", (-xv, -s, H - T), (0, -s, zV))
+    leg("v_d", (xv, -s, H - T), (0, -s, zV))
+    # crochets d'about : petits blocs qui ramènent le point d'attache au centre
+    hookA = box("crochet_haut", (PW * .9, s + PT * .8, PW * .55), loc=(0, (s - PT * .3) / 2, zA - PW * .75), m=leg_m, bevel=.002)
+    hookV = box("crochet_bas", (PW * .9, s + PT * .8, PW * .55), loc=(0, -(s - PT * .3) / 2, zV + PW * .75), m=leg_m, bevel=.002)
+    table += [hookA, hookV]
+    ea = (0, 0, zA - PW * 1.03 - .004); ev = (0, 0, zV + PW * 1.03 + .004)
+    table.append(torus("piton_haut", ea, .006, .0016, brass, (math.pi / 2, 0, 0)))
+    table.append(torus("piton_bas", ev, .006, .0016, brass, (math.pi / 2, 0, 0)))
+    # corde centrale : porte tout le plateau
+    if cfg["link"] == "chaine":
+        table += chain((0, 0, ea[2] - .006), (0, 0, ev[2] + .006), brass, .0055, .0014)
+    else:
+        table.append(cyl_between("corde_centrale", (0, 0, ea[2] - .005), (0, 0, ev[2] + .005), rope_r * 1.15, rope_m))
+
+    # liens verticaux aux coins
+    if cfg.get("round"):
+        r = L / 2 - .032
+        corners = [(r * math.cos(a), r * math.sin(a)) for a in (math.radians(45), math.radians(135), math.radians(225), math.radians(315))]
+    else:
+        corners = [(sx * (L / 2 - .03), sy * (W / 2 - .03)) for sx in (-1, 1) for sy in (-1, 1)]
+    for (cx_, cy_) in corners:
+        t1 = (cx_, cy_, H - T - .007); t0 = (cx_, cy_, T + .007)
+        table.append(torus("piton", t1, .005, .0014, brass, (math.pi / 2, 0, 0)))
+        table.append(torus("piton", t0, .005, .0014, brass, (math.pi / 2, 0, 0)))
+        if cfg["link"] == "chaine":
+            table += chain((cx_, cy_, t1[2] - .005), (cx_, cy_, t0[2] + .005), brass, .0055, .0014)
+        else:
+            table.append(cyl_between("lien", (cx_, cy_, t1[2] - .005), (cx_, cy_, t0[2] + .005), rope_r, rope_m))
+
+    # finitions
+    if cfg.get("chess"):
+        sq = min(L, W) * .74
+        hole = box("hole", (sq, sq, T * .5), loc=(0, 0, H), bevel=0)
+        bo = top.modifiers.new("cut", "BOOLEAN"); bo.object = hole; bo.operation = "DIFFERENCE"; hole.hide_render = True; hole.hide_viewport = True
+        board = box("board", (sq - .003, sq - .003, .01), loc=(0, 0, H - .005 + .0004), m=chess_mat(), bevel=.0008)
+        bpy.context.view_layer.objects.active = board; bpy.ops.object.mode_set(mode="EDIT"); bpy.ops.mesh.select_all(action="SELECT")
+        bpy.ops.uv.cube_project(cube_size=sq - .003, correct_aspect=True); bpy.ops.object.mode_set(mode="OBJECT")
+        rim = box("rim", (sq + .006, sq + .006, .002), loc=(0, 0, H - .001), m=brass, bevel=0)
+        rh = box("rimhole", (sq - .002, sq - .002, .01), loc=(0, 0, H), bevel=0)
+        b2 = rim.modifiers.new("cut", "BOOLEAN"); b2.object = rh; rh.hide_render = True; rh.hide_viewport = True
+        table += [board, rim]
+    if cfg.get("inlay"):
+        inl = box("filet", (L + .0016, W + .0016, .004), loc=(0, 0, H - T / 2), m=brass, bevel=0)
+        ih = box("filethole", (L - .01, W - .01, .02), loc=(0, 0, H - T / 2), bevel=0)
+        b3 = inl.modifiers.new("cut", "BOOLEAN"); b3.object = ih; ih.hide_render = True; ih.hide_viewport = True
+        table.append(inl)
+    if cfg.get("lamp"):
+        bpy.ops.object.light_add(type="AREA", location=(0, 0, H - T - .004)); la = bpy.context.active_object
+        la.data.energy = 6; la.data.color = (1, .76, .5); la.data.size = L * .5; la.rotation_euler = (math.pi, 0, 0)
+    if cfg.get("text"):
+        bpy.ops.object.text_add(location=(0, -W / 2 - .0004, H - T / 2 - T * .17))
+        tx = bpy.context.active_object; tx.data.body = cfg["text"]; tx.data.size = T * .42; tx.data.align_x = "CENTER"
+        tx.data.extrude = .0003; tx.rotation_euler = (math.pi / 2, 0, 0)
+        try: tx.data.font = bpy.data.fonts.load("/usr/share/fonts/truetype/dejavu/DejaVuSerif-Italic.ttf")
+        except Exception: pass
+        tx.data.materials.append(brass); table.append(tx)
+
+elif cfg["potager"] == "chainette":
+    # table à manger simple sous le potager
+    tm = wood_mat("noyer", 4, "X")
+    box("plateau", (L, W, .04), loc=(0, 0, H - .02), m=tm, bevel=.004)
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            box("pied", (.06, .06, H - .04), loc=(sx * (L / 2 - .1), sy * (W / 2 - .08), (H - .04) / 2), m=tm, bevel=.003)
+
 
 # ---------------------------------------------------------------- caméra
 bpy.ops.object.camera_add(); cam = bpy.context.active_object; sc.camera = cam
-cam.data.lens = 50; cam.data.sensor_width = 36
-cam.data.dof.use_dof = True; cam.data.dof.aperture_fstop = 4.0
-if cfg.get("two") and not cfg.get("potager"):
-    cam_dist *= 1.9 if L > 1.5 else 1.5; cam_h *= 1.15
+cam.data.lens = 50; cam.data.sensor_width = 36; cam.data.sensor_fit = "AUTO"
+cam.data.dof.use_dof = True; cam.data.dof.aperture_fstop = 5.6
+cam.data.shift_x = float(opt("--shift", 0))
+if not cfg.get("potager"):
+    aspect = RES[0] / RES[1]
+    half = math.atan(18 / 50)
+    if aspect >= 1: hf, vf = half, math.atan(math.tan(half) / aspect)
+    else: vf, hf = half, math.atan(math.tan(half) * aspect)
+    wneed = max(L, W) * (1.85 if SCENE == "studio" else 2.3)
+    hneed = H * (1.8 if SCENE == "studio" else 2.2)
+    cam_dist = max(wneed / (2 * math.tan(hf)), hneed / (2 * math.tan(vf)))
+    cam_h = H * .55 + cam_dist * .26
+    cam_target = (0, 0, H * .46)
 
 def place_cam(angle_deg):
     a = math.radians(angle_deg)
@@ -559,18 +556,15 @@ def place_cam(angle_deg):
     cam.rotation_euler = d.to_track_quat("-Z", "Y").to_euler()
     cam.data.dof.focus_distance = d.length
 
-
 if "--norender" in args:
-    for o in bpy.data.objects:
-        if o.name.startswith(("runner","w0","w3","stretcher")): print("OBJ", o.name, [round(v,3) for v in o.location], [round(math.degrees(v),1) for v in o.rotation_euler], [round(v,3) for v in o.dimensions])
-    sys.exit(0)
+    print("OBJECTS", len(bpy.data.objects)); sys.exit(0)
 if SPIN:
     for i in range(START, SPIN):
-        place_cam(-28 + i * 360 / SPIN)
+        place_cam(-24 + i * 360 / SPIN)
         sc.render.filepath = os.path.join(out_dir, "frame-%03d.jpg" % i)
         bpy.ops.render.render(write_still=True)
 else:
-    place_cam(float(opt("--angle", -28)))
+    place_cam(float(opt("--angle", -24)))
     sc.render.filepath = os.path.join(out_dir, "%s-%s.jpg" % (variant, SCENE))
     bpy.ops.render.render(write_still=True)
 print("DONE")

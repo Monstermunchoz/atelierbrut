@@ -23,7 +23,7 @@ Avant mise en ligne :
 - `img/scenes/`, `img/potagers/` — mises en situation.
 - `img/atelier/` — photos du prototype n°1.
 
-Les scripts de rendu (Blender / Cycles) sont dans `render/` et se lancent avec `python3 render/table_w.py <variante> <dossier> [--spin 36] [--samples 64] [--res 1000 1250] [--scene studio|salon]`.
+Les scripts de rendu (Blender / Cycles) sont dans `render/` et se lancent avec `python3 render/tensegrite.py <variante> <dossier> [--spin 36] [--samples 40] [--res 1000 1250] [--scene studio|salon] [--shift -0.17]`.
 
 ## Structure
 
