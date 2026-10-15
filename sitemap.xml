@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url><loc>https://atelierbrut.fr/</loc><changefreq>weekly</changefreq><priority>1.0</priority>
+    <image:image><image:loc>https://atelierbrut.fr/img/pieces/origine-studio.jpg</image:loc><image:title>Table tenségrité n°1 Origine — Atelier Brut</image:title></image:image></url>
+  <url><loc>https://atelierbrut.fr/collection</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://atelierbrut.fr/potagers</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://atelierbrut.fr/configurateur</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://atelierbrut.fr/atelier</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://atelierbrut.fr/contact</loc><changefreq>yearly</changefreq><priority>0.5</priority></url>
+</urlset>

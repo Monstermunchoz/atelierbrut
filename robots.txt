@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /_test.html
+
+Sitemap: https://atelierbrut.fr/sitemap.xml

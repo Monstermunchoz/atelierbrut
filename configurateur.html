@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Composer une table sur mesure — Configurateur | Atelier Brut</title>
+  <meta name="description" content="Composez votre table en tenségrité sur mesure : format, essence de bois massif (pin, chêne, noyer, olivier, frêne brûlé), cordes, plateau échiquier en céramique, gravure, version lévitation. Estimation immédiate, devis sous 48 h.">
+  <link rel="canonical" href="https://atelierbrut.fr/configurateur">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="fr_FR">
+  <meta property="og:title" content="Composer une table sur mesure — Atelier Brut">
+  <meta property="og:description" content="Format, bois, cordes, céramique, gravure, lévitation : estimation immédiate.">
+  <meta property="og:url" content="https://atelierbrut.fr/configurateur">
+  <meta property="og:image" content="https://atelierbrut.fr/img/og/atelier-brut-configurateur.jpg">
+  <meta name="theme-color" content="#e9e7e1">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script type="application/ld+json">
+  { "@context": "https://schema.org", "@type": "WebPage", "name": "Configurateur de table sur mesure", "url": "https://atelierbrut.fr/configurateur",
+    "breadcrumb": { "@type": "BreadcrumbList", "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://atelierbrut.fr/" },
+      { "@type": "ListItem", "position": 2, "name": "Sur-mesure", "item": "https://atelierbrut.fr/configurateur" } ] } }
+  </script>
+</head>
+<body>
+
+<header class="hdr">
+  <a class="logo" href="/">Atelier <b>Brut</b></a>
+  <button class="burger" aria-label="Menu" aria-expanded="false">Menu</button>
+  <nav>
+    <a href="/collection">Collection</a>
+    <a href="/potagers">Potagers suspendus</a>
+    <a href="/configurateur">Sur-mesure</a>
+    <a href="/atelier">L'atelier</a>
+    <a href="/contact">Contact</a>
+  </nav>
+</header>
+
+<main class="conf">
+  <div class="stage">
+    <img id="preview" src="img/pieces/origine-studio.jpg" alt="Aperçu de la table composée" width="1000" height="1250" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 60%;transition:opacity .5s">
+    <div class="title">
+      <h1>Composer une table</h1>
+      <p id="previewNote">Aperçu : N°1 « Origine » — pin brossé, chanvre.</p>
+    </div>
+  </div>
+
+  <aside class="panel" aria-label="Options de configuration">
+    <h2>Votre pièce</h2>
+
+    <div class="ctl">
+      <span class="lbl">Format</span>
+      <div class="seg" role="group" aria-label="Format" data-key="format">
+        <button aria-pressed="true" data-v="bout">Bout de canapé 62 × 62</button>
+        <button aria-pressed="false" data-v="console">Console 120 × 42</button>
+        <button aria-pressed="false" data-v="manger">Table à manger 190 × 88</button>
+      </div>
+    </div>
+
+    <div class="ctl">
+      <span class="lbl">Essence (bois massif, huilé)</span>
+      <div class="swatches" role="group" aria-label="Essence" data-key="wood">
+        <button class="sw" aria-pressed="true" data-v="pin" style="--c:#c8a06a"><i></i>Pin brossé</button>
+        <button class="sw" aria-pressed="false" data-v="chene" style="--c:#b08a58"><i></i>Chêne</button>
+        <button class="sw" aria-pressed="false" data-v="noyer" style="--c:#5c3d27"><i></i>Noyer</button>
+        <button class="sw" aria-pressed="false" data-v="olivier" style="--c:#a88d5c"><i></i>Olivier</button>
+        <button class="sw" aria-pressed="false" data-v="frene" style="--c:#211b16"><i></i>Frêne brûlé</button>
+      </div>
+    </div>
+
+    <div class="ctl">
+      <span class="lbl">Plateau</span>
+      <div class="seg" role="group" aria-label="Plateau" data-key="top">
+        <button aria-pressed="true" data-v="bois">Bois plein</button>
+        <button aria-pressed="false" data-v="echiquier">Échiquier céramique</button>
+      </div>
+    </div>
+
+    <div class="ctl">
+      <span class="lbl">Cordes</span>
+      <div class="swatches" role="group" aria-label="Cordes" data-key="cords">
+        <button class="sw" aria-pressed="true" data-v="chanvre" style="--c:#c9b48a"><i></i>Chanvre</button>
+        <button class="sw" aria-pressed="false" data-v="noir" style="--c:#1a1714"><i></i>Lin noir</button>
+        <button class="sw" aria-pressed="false" data-v="bordeaux" style="--c:#6e2a2a"><i></i>Bordeaux</button>
+        <button class="sw" aria-pressed="false" data-v="mousse" style="--c:#5b6b48"><i></i>Vert mousse</button>
+        <button class="sw" aria-pressed="false" data-v="laiton" style="--c:#d8b46b"><i></i>Câble laiton</button>
+      </div>
+    </div>
+
+    <div class="ctl">
+      <span class="lbl">Tension</span>
+      <div class="seg" role="group" aria-label="Tension" data-key="pattern">
+        <button aria-pressed="true" data-v="centre">Cinq cordes (tenségrité)</button>
+        <button aria-pressed="false" data-v="harpe">Harpe (18 cordes)</button>
+      </div>
+      <p class="notice" id="patternNote" style="margin-top:8px">Quatre haubans aux coins et la corde centrale qui porte le plateau.</p>
+    </div>
+
+    <div class="ctl">
+      <label for="text">Gravure sur le chant (facultatif)</label>
+      <input type="text" id="text" maxlength="60" placeholder="Un mot, une date, un vers…" autocomplete="off">
+    </div>
+
+    <div class="ctl">
+      <span class="lbl">Détails</span>
+      <div class="swatches" role="group" aria-label="Détails" data-key="extras" data-multi="true">
+        <button class="sw" aria-pressed="false" data-v="inlay" style="--c:#c19a5b"><i></i>Filet de laiton au chant</button>
+        <button class="sw" aria-pressed="false" data-v="lamp" style="--c:#ffd9a3"><i></i>Lumière sous le plateau</button>
+      </div>
+    </div>
+
+    <div class="price">
+      <small>Estimation, pièce unique fabriquée à la main</small>
+      <div class="amount" id="price">420 €</div>
+      <small>Délai indicatif : <span id="delay">6 à 8 semaines</span>. Devis définitif sous 48 h.</small>
+      <a class="btn solid" id="ask" href="mailto:contact@atelierbrut.fr">Demander ce modèle</a>
+      <p class="summary" id="summary"></p>
+      <p class="notice">L'aperçu montre la pièce de la collection la plus proche de votre composition. Le rendu exact de votre table vous est envoyé avec le devis.</p>
+    </div>
+  </aside>
+</main>
+
+<script src="js/configurateur.js" defer></script>
+<script src="js/site.js" defer></script>
+</body>
+</html>
