@@ -112,7 +112,7 @@ s { text-decoration-thickness: 1px; }
 
 /* ---------- Héro ---------- */
 .hero { position: relative; min-height: 100svh; display: grid; align-items: end; overflow: hidden; background: #b2a999; }
-.hero .veil { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgba(231,225,215,.55), rgba(231,225,215,0) 48%); }
+.hero .veil { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(231,225,215,.8), rgba(231,225,215,0) 20%), linear-gradient(90deg, rgba(231,225,215,.55), rgba(231,225,215,0) 48%); }
 @media (max-width: 900px) { .hero .veil { background: linear-gradient(180deg, rgba(231,225,215,0) 35%, rgba(231,225,215,.85) 72%); } }
 .hero .inner { position: relative; z-index: 2; padding-bottom: clamp(32px, 6vw, 88px); padding-top: 120px; display: grid; gap: 28px; grid-template-columns: 1fr; align-items: end; color: var(--ink); pointer-events: none; }
 .hero .inner > * { pointer-events: auto; max-width: 620px; }
@@ -293,3 +293,4 @@ s { text-decoration-thickness: 1px; }
 .seg button:disabled { opacity: .35; cursor: not-allowed; }
 .hero-spin { background: #b2a999 url("../img/pieces/origine-studio.jpg") right 10% center / auto 100% no-repeat; }
 @media (max-width: 900px) { .hero-spin img { object-position: 68% 40%; } .hero-spin { background-position: center top; } }
+.piece-spin { background: #b2a999 url("../img/pieces/origine-studio.jpg") center / cover no-repeat; }

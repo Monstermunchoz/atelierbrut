@@ -55,7 +55,7 @@ sc.cycles.max_bounces = 6; sc.cycles.caustics_reflective = False; sc.cycles.caus
 sc.render.resolution_x, sc.render.resolution_y = RES; sc.render.resolution_percentage = 100
 sc.render.image_settings.file_format = "JPEG"; sc.render.image_settings.quality = 90
 sc.view_settings.view_transform = "AgX"; sc.view_settings.look = "AgX - Medium High Contrast"
-sc.view_settings.exposure = -0.3
+sc.view_settings.exposure = float(opt("--exposure", -0.3))
 sc.render.film_transparent = False
 
 def mat(name):
